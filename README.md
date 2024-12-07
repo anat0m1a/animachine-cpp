@@ -34,7 +34,7 @@ animachine always expects two positional arguments. That is:
 1. `<source file>` `<dest file>`
 2. `<source folder>` `<dest folder>`
 
-All other options are handled by cpp-inquirer. At the end of the day, I didn't want to make this another ffmpeg. Some will hate this, but I wanted something interactive that shows me the available options and guides me through.  At the end of the day, the first encode probably won't be perfect anyway, so it's naturally an involved process.
+All other options are handled by cpp-inquirer. Some will hate this, but I wanted something interactive that shows me the available options and guides me through.  At the end of the day, the first encode probably won't be perfect anyway, so it's naturally an involved process.
 
 The program will guide you through selecting your options, and then, if you're doing a batch run, transcode everything from `<source dir>` into `<dest dir>` with your selected options.
 
