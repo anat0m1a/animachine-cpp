@@ -11,6 +11,22 @@ This is highly individualised to my use case and won't work for everyone. It's m
 
 If this sounds useful to you, give it a go, or be my guest to fork it and make it your own.
 
+## Build Requirements
+
+for build deps:
+- libmediainfo
+- pkgconf
+
+to actually build:
+- cmake 
+- a build system, ninja works fine
+- a compiler etc. :)
+
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+ninja -C build
+
+src/build/animachine ... tada
+
 ## Usage
 
 animachine always expects two positional arguments. That is:
