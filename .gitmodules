@@ -1,0 +1,3 @@
+[submodule "cpp-inquirer"]
+	path = cpp-inquirer
+	url = git@github.com:anat0m1a/cpp-inquirer.git

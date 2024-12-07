@@ -1,0 +1,4 @@
+Name: Animachine
+Description: Media processing and automation tool
+Version: @PROJECT_VERSION@
+Requires: libmediainfo
