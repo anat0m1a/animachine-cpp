@@ -11,6 +11,9 @@ This is highly individualised to my use case and won't work for everyone. It's m
 
 If this sounds useful to you, give it a go, or be my guest to fork it and make it your own.
 
+## Preview
+![preview](./media/pv.png)
+
 ## Build Requirements
 
 for build deps:
