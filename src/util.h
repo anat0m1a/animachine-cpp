@@ -305,10 +305,11 @@ template <typename item> bool handle_duration(String duration, item &ref) {
 
 template <typename item> bool handle_bitrate(const String &rate, item &ref) {
   if (rate.empty()) {
-    ERROR("Bitrate string is empty.");
+    WARNING("Bitrate string is empty.");
+set_bitrate:
     ref.br.bitrate_str = "-";
     ref.br.kbps = 0;
-    return false;
+    return true;
   }
 
   double kbps = 0.0;
@@ -316,22 +317,16 @@ template <typename item> bool handle_bitrate(const String &rate, item &ref) {
   try {
     kbps = std::stod(rate) / 1000; // kbps
   } catch (const std::invalid_argument &e) {
-    ERROR("Failed to convert bitrate: Invalid argument (%s)", rate.c_str());
-    ref.br.bitrate_str = "-";
-    ref.br.kbps = 0;
-    return false;
+    WARNING("Failed to convert bitrate: Invalid argument (%s)", rate.c_str());
+    goto set_bitrate;
   } catch (const std::out_of_range &e) {
-    ERROR("Failed to convert bitrate: Out of range (%s)", rate.c_str());
-    ref.br.bitrate_str = "-";
-    ref.br.kbps = 0;
-    return false;
+    WARNING("Failed to convert bitrate: Out of range (%s)", rate.c_str());
+    goto set_bitrate;
   }
 
   if (kbps < 0) {
-    ERROR("Bitrate cannot be negative: %f", kbps);
-    ref.br.bitrate_str = "-";
-    ref.br.kbps = 0;
-    return false;
+    WARNING("Bitrate cannot be negative: %f", kbps);
+    goto set_bitrate;
   }
 
   DEBUG_INFO("Parsed bitrate: %lu %s",
