@@ -210,6 +210,7 @@ int main(int argc, char **argv) {
       if (!prep_and_call_ffmpeg(inpath, outpath, *ff_opts)) {
         return 1;
       }
+      i++;
     }
     goto done;
   }
