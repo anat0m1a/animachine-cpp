@@ -192,5 +192,5 @@ bool build_file_list(std::vector<std::string> &list, std::string &target) {
     std::cout << " - " << file << std::endl;
   }
 #endif
-  return 1;
+  return true;
 }

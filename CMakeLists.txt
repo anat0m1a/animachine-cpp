@@ -36,6 +36,12 @@ target_include_directories(animachine PRIVATE ${CMAKE_SOURCE_DIR}/cpp-inquirer/s
 target_include_directories(animachine PRIVATE ${LIBMEDIAINFO_INCLUDE_DIRS})
 target_link_libraries(animachine PRIVATE ${LIBMEDIAINFO_LIBRARIES})
 
+if(CMAKE_BUILD_TYPE STREQUAL "Sanitize")
+    target_compile_definitions(animachine PRIVATE DEBUG)
+    target_compile_options(animachine PRIVATE -fsanitize=address -fsanitize=undefined -g -O1)
+    target_link_options(animachine PRIVATE -fsanitize=address -fsanitize=undefined)
+endif()
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(animachine PRIVATE DEBUG)
 endif()

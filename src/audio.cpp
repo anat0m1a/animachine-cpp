@@ -20,43 +20,51 @@
 
 #include "util.h"
 
-void populate_audio_data(audio_info *audio, size_t index) {
+bool populate_audio_data(audio_info &audio, size_t index) {
   char *endptr;
   char *cstring;
 
   String t_format = mi_get_string(Stream_Audio, index, "Format");
   String t_lang = mi_get_string(Stream_Audio, index, "Language");
 
-  audio->index = index;
-  audio->channel_count = strtoul(
-      mi_get_string(Stream_Audio, index, "Channel(s)").c_str(), &endptr, 10);
+  audio.index = index;
+  if (!cast_to_size(mi_get_string(Stream_Audio, index, "Channel(s)").c_str(),
+                    audio.channel_count)) {
+    return false;
+  }
 
-  audio->format = !t_format.empty() ? t_format : "-";
-  audio->lang = !t_lang.empty() ? t_lang : "-";
-  audio->is_bluray =
+  audio.format = !t_format.empty() ? t_format : "-";
+  audio.lang = !t_lang.empty() ? t_lang : "-";
+  audio.is_bluray =
       mi_get_string(Stream_Audio, index, "OriginalSourceMedium") == "Blu-ray"
           ? 1
           : 0;
 
-  handle_duration(mi_get_string(Stream_Audio, index, "Duration"), audio);
-  handle_bitrate(mi_get_string(Stream_Audio, index, "BitRate"), audio);
+  if (!handle_duration(mi_get_string(Stream_Audio, index, "Duration"), audio)) {
+    return false;
+  };
+  if (!handle_bitrate(mi_get_string(Stream_Audio, index, "BitRate"), audio)) {
+    return false;
+  };
+
+  return true;
 }
 
 #ifdef DEBUG
-template <> void stream_print<audio_info>(audio_info *audio) {
+void stream_print(audio_info &audio) {
   std::cout << "\nAudio Information:" << std::endl;
-  std::cout << "  Index: " << audio->index << std::endl;
-  std::cout << "  Format: " << audio->format << std::endl;
-  std::cout << "  Channels: " << audio->channel_count << std::endl;
-  std::cout << "  Duration: " << audio->dr.duration_str << std::endl;
-  std::cout << "  Language: " << audio->lang << std::endl;
-  std::cout << "  Bitrate: " << audio->br.bitrate_str << std::endl;
-  std::cout << "  Blu-ray Source: " << (audio->is_bluray ? "Yes" : "No")
+  std::cout << "  Index: " << audio.index << std::endl;
+  std::cout << "  Format: " << audio.format << std::endl;
+  std::cout << "  Channels: " << audio.channel_count << std::endl;
+  std::cout << "  Duration: " << audio.dr.duration_str << std::endl;
+  std::cout << "  Language: " << audio.lang << std::endl;
+  std::cout << "  Bitrate: " << audio.br.bitrate_str << std::endl;
+  std::cout << "  Blu-ray Source: " << (audio.is_bluray ? "Yes" : "No")
             << std::endl
             << std::endl;
 }
 #else
-template <> void stream_print<audio_info>(audio_info *video) {
+void stream_print(audio_info &audio) {
   // No-op
 }
 #endif

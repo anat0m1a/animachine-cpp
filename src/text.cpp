@@ -20,7 +20,7 @@
 
 #include "util.h"
 
-void populate_text_data(text_info *text, size_t index) {
+bool populate_text_data(text_info &text, size_t index) {
   char *endptr;
   char *cstring;
 
@@ -28,29 +28,31 @@ void populate_text_data(text_info *text, size_t index) {
   String t_format = mi_get_string(Stream_Text, index, "Format");
   String t_lang = mi_get_string(Stream_Text, index, "Language");
 
-  text->index = index;
-  text->info = !t_index.empty() ? t_index : "-";
-  text->format = !t_format.empty() ? t_format : "-";
-  text->lang = !t_lang.empty() ? t_lang : "-";
-  text->is_bluray =
+  text.index = index;
+  text.info = !t_index.empty() ? t_index : "-";
+  text.format = !t_format.empty() ? t_format : "-";
+  text.lang = !t_lang.empty() ? t_lang : "-";
+  text.is_bluray =
       mi_get_string(Stream_Text, index, "OriginalSourceMedium") == "Blu-ray"
           ? 1
           : 0;
+
+  return true;
 }
 
 #ifdef DEBUG
-template <> void stream_print<text_info>(text_info *text) {
+void stream_print(text_info &text) {
   std::cout << "\nText Information:" << std::endl;
-  std::cout << "  Index: " << text->index << std::endl;
-  std::cout << "  Format: " << text->format << std::endl;
-  std::cout << "  Information: " << text->info << std::endl;
-  std::cout << "  Language: " << text->lang << std::endl;
-  std::cout << "  Blu-ray Source: " << (text->is_bluray ? "Yes" : "No")
+  std::cout << "  Index: " << text.index << std::endl;
+  std::cout << "  Format: " << text.format << std::endl;
+  std::cout << "  Information: " << text.info << std::endl;
+  std::cout << "  Language: " << text.lang << std::endl;
+  std::cout << "  Blu-ray Source: " << (text.is_bluray ? "Yes" : "No")
             << std::endl
             << std::endl;
 }
 #else
-template <> void stream_print<text_info>(text_info *video) {
+void stream_print(text_info &text) {
   // No-op
 }
 #endif
