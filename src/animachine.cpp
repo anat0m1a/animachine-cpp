@@ -137,6 +137,7 @@ int main(int argc, char **argv) {
   }
 
   if (!build_options(*ff_opts)) {
+    return 1;
   }
 
   if (batch_m) {
