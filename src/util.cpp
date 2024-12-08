@@ -486,13 +486,13 @@ bool build_options(ffmpeg_opts &ff_opts) {
 }
 
 std::string format_episode(int curr, int ep_max) {
-    int width = ep_max < 10 ? 2 : std::to_string(ep_max).length();
+  int width = ep_max < 10 ? 2 : std::to_string(ep_max).length();
 
-    std::ostringstream formatted;
-    formatted << std::setw(width) << std::setfill('0') << curr;
+  std::ostringstream formatted;
+  formatted << std::setw(width) << std::setfill('0') << curr;
 
-    DEBUG_INFO("formatting for episode is: %s", formatted.str().c_str());
-    return formatted.str();
+  DEBUG_INFO("formatting for episode is: %s", formatted.str().c_str());
+  return formatted.str();
 }
 
 bool process_fork_ffmpeg(std::vector<char *> &c_args) {
@@ -618,9 +618,7 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
     if (opts.audio.should_copy) {
       args.insert(args.end(), {"-c:a", "copy"});
     } else {
-      args.insert(args.end(),
-                  {"-c:a", opts.audio.codec, "-b:a",
-                   (opts.audio.codec == "libopus" ? "96k" : "192k")});
+      args.insert(args.end(), {"-c:a", opts.audio.codec, "-b:a", "192k"});
     }
 
     if (opts.audio.should_downsample) {
@@ -640,7 +638,7 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
       only save these options when we're not testing,
       otherwise we'll just do a batch of tests.
     */
-    if (!opts.should_test) { 
+    if (!opts.should_test) {
       g_saved_options = args;
     }
   }
@@ -652,7 +650,7 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
     this should make it such that args is used when testing,
     and at any other point, we'll just restore our options cache.
   */
-  if(!opts.should_test){
+  if (!opts.should_test) {
     args = g_saved_options;
   }
 
@@ -662,8 +660,9 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
   c_args.push_back(const_cast<char *>("-i"));
   c_args.push_back(const_cast<char *>(target.c_str()));
 
-  args.pop_back(); args.push_back(output);
-  
+  args.pop_back();
+  args.push_back(output);
+
   for (auto &arg : args) {
     c_args.push_back(const_cast<char *>(arg.c_str()));
   }
