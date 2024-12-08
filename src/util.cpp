@@ -485,14 +485,14 @@ bool build_options(ffmpeg_opts &ff_opts) {
   return false;
 }
 
-// pad zeroes properly (untested)
 std::string format_episode(int curr, int ep_max) {
-  int width = std::to_string(ep_max).length();
+    int width = ep_max < 10 ? 2 : std::to_string(ep_max).length();
 
-  std::ostringstream formatted;
-  formatted << std::setw(width) << std::setfill('0') << curr;
-  DEBUG_INFO("formatting for episodes is: %s", formatted.str().c_str());
-  return formatted.str();
+    std::ostringstream formatted;
+    formatted << std::setw(width) << std::setfill('0') << curr;
+
+    DEBUG_INFO("formatting for episodes is: %s", formatted.str().c_str());
+    return formatted.str();
 }
 
 bool process_fork_ffmpeg(std::vector<char *> &c_args) {

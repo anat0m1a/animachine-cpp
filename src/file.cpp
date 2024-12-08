@@ -89,18 +89,24 @@ bool directories_exist(const std::vector<std::string> &dirs) {
 }
 
 bool make_directory(const std::string &path) {
-  if (directory_exists(path)) {
-    INFO("Directory already exists: %s", path.c_str());
-    return true;
-  }
+    size_t start = 0, end;
+    while ((end = path.find('/', start)) != std::string::npos) {
+        std::string current_path = path.substr(0, end);
+        if (!current_path.empty() && mkdir(current_path.c_str(), 0755) != 0 && errno != EEXIST) {
+            ERROR("Failed to create directory");
+            return false;
+        }
+        start = end + 1;
+    }
 
-  if (mkdir(path.c_str(), 0755) == 0) {
-    INFO("Directory created: %s", path.c_str());
+    if (mkdir(path.c_str(), 0755) != 0 && errno != EEXIST) {
+        ERROR("Failed to create directory");
+        return false;
+    }
+
+    DEBUG_INFO("Directory created: %s", path.c_str());
+
     return true;
-  } else {
-    ERROR("mkdir failed");
-    return false;
-  }
 }
 
 bool rm(const std::string &path) {
