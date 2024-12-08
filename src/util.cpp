@@ -491,7 +491,7 @@ std::string format_episode(int curr, int ep_max) {
     std::ostringstream formatted;
     formatted << std::setw(width) << std::setfill('0') << curr;
 
-    DEBUG_INFO("formatting for episodes is: %s", formatted.str().c_str());
+    DEBUG_INFO("formatting for episode is: %s", formatted.str().c_str());
     return formatted.str();
 }
 

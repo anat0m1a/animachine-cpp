@@ -197,28 +197,28 @@ int main(int argc, char **argv) {
     for(auto &f : file_list) {
       DEBUG_INFO("  %s", f.c_str());
     }
-    size_t e = 0; // probably wants a better name
+
     for (auto &file : file_list) {
 
       String outpath = output + "/S0" + std::to_string(season_c) + "E" +
                        format_episode(i, end) + ".mp4";
 
-      String inpath = input + "/" + file_list[e];
+      String inpath = input + "/" + file;
 
-      DEBUG_INFO("now transcoding %s", file_list[e].c_str());
+      DEBUG_INFO("now transcoding %s -> %s", inpath.c_str(), outpath.c_str());
 
       if (!prep_and_call_ffmpeg(inpath, outpath, *ff_opts)) {
         return 1;
       }
-      i++; e++;
     }
+    goto done;
   }
 
   if (!prep_and_call_ffmpeg(input, output, *ff_opts)) {
     ERROR("Failed to complete transcode");
     return 1;
   }
-
+done:
   INFO("All done !");
 
   return 0;
