@@ -25,10 +25,11 @@ to actually build:
 - a build system, ninja works fine
 - a compiler etc. :)
 
+```shell
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 ninja -C build
-
-src/build/animachine ... tada
+src/build/animachine
+```
 
 ## Usage
 

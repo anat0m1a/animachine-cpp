@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,175 +19,178 @@
 // SOFTWARE.
 
 #include "util.h"
-#include <vector>
 #include <cstring>
-#include <dirent.h> 
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <vector>
 
-bool is_executable(const std::string& path) {
-    struct stat st;
-    return (stat(path.c_str(), &st) == 0) && (st.st_mode & S_IXUSR);
+bool is_executable(const std::string &path) {
+  struct stat st;
+  return (stat(path.c_str(), &st) == 0) && (st.st_mode & S_IXUSR);
 }
 
 // search for an executable in the PATH environment variable
-std::string which(const std::string& command) {
-    const char* path_env = std::getenv("PATH");
-    if (!path_env) {
-        return ""; // no path
-    }
+std::string which(const std::string &command) {
+  const char *path_env = std::getenv("PATH");
+  if (!path_env) {
+    return ""; // no path
+  }
 
-    std::string path_str(path_env);
-    size_t start = 0;
-    size_t end;
+  std::string path_str(path_env);
+  size_t start = 0;
+  size_t end;
 
-    while ((end = path_str.find(':', start)) != std::string::npos) {
-        std::string dir = path_str.substr(start, end - start);
-        std::string full_path = dir + "/" + command;
-
-        if (is_executable(full_path)) {
-            return full_path;
-        }
-
-        start = end + 1;
-    }
-
-    // last dir in path
-    std::string dir = path_str.substr(start);
+  while ((end = path_str.find(':', start)) != std::string::npos) {
+    std::string dir = path_str.substr(start, end - start);
     std::string full_path = dir + "/" + command;
+
     if (is_executable(full_path)) {
-        return full_path;
+      return full_path;
     }
 
-    return ""; // not found
+    start = end + 1;
+  }
+
+  // last dir in path
+  std::string dir = path_str.substr(start);
+  std::string full_path = dir + "/" + command;
+  if (is_executable(full_path)) {
+    return full_path;
+  }
+
+  return ""; // not found
 }
 
-bool file_exists(const std::string& path) {
-    struct stat path_stat;
-    if (stat(path.c_str(), &path_stat) != 0) {
-        return false;
-    }
-
-    return S_ISREG(path_stat.st_mode);
-}
-
-bool directory_exists(const std::string& path) {
-    struct stat path_stat;
-    if (stat(path.c_str(), &path_stat) != 0) {
-        return false;
-    }
-    return S_ISDIR(path_stat.st_mode);
-}
-
-bool directories_exist(const std::vector<std::string>& dirs) {
-    for (const auto& target : dirs) {
-        if (!directory_exists(target)) { return false; }
-    }
-    return true;
-}
-
-bool make_directory(const std::string& path) {
-    if (directory_exists(path)) {
-        INFO("Directory already exists: %s", path.c_str());
-        return true;
-    }
-
-    if (mkdir(path.c_str(), 0755) == 0) {
-        INFO("Directory created: %s", path.c_str());
-        return true;
-    } else {
-        ERROR("mkdir failed");
-        return false; 
-    }
-}
-
-bool rm(const std::string& path) {
-    struct stat path_stat;
-
-    // stat to see if we have a dir
-    if (stat(path.c_str(), &path_stat) != 0) {
-        ERROR("stat failed");
-        return false;
-    }
-
-    // if a dir, we'll enumerate its contents
-    if (S_ISDIR(path_stat.st_mode)) {
-        DIR* dir = opendir(path.c_str());
-        if (!dir) {
-            ERROR("opendir failed");
-            return false;
-        }
-
-        // get the directory listing; call recursively to deal
-        // with all files and directories
-        struct dirent* entry;
-        while ((entry = readdir(dir)) != nullptr) {
-            // kip entries we don't care about
-            if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
-                continue;
-            }
-
-            // build a full path to the new item to check
-            std::string entry_path = path + "/" + entry->d_name;
-
-            if (!rm(entry_path)) {
-                closedir(dir);
-                return false;
-            }
-        }
-
-        closedir(dir);
-
-        // Remove the directory itself
-        if (rmdir(path.c_str()) != 0) {
-            ERROR("rmdir failed");
-            return false;
-        }
-    // only a regular file, so just unlink and return
-    } else {
-        if (unlink(path.c_str()) != 0) {
-            ERROR("unlink failed");
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool ends_with(const std::string& filename, const std::string& extension) {
-    if (filename.length() >= extension.length()) {
-        return filename.compare(filename.length() - extension.length(), extension.length(), extension) == 0;
-    }
+bool file_exists(const std::string &path) {
+  struct stat path_stat;
+  if (stat(path.c_str(), &path_stat) != 0) {
     return false;
+  }
+
+  return S_ISREG(path_stat.st_mode);
 }
 
-bool build_file_list(std::vector<std::string>&list, std::string& target) {
-    DIR* dir;
-    struct dirent* entry;
+bool directory_exists(const std::string &path) {
+  struct stat path_stat;
+  if (stat(path.c_str(), &path_stat) != 0) {
+    return false;
+  }
+  return S_ISDIR(path_stat.st_mode);
+}
 
-    dir = opendir(target.c_str());
-    if (dir == nullptr) {
-        ERROR("opendir failed");
-        return false;
+bool directories_exist(const std::vector<std::string> &dirs) {
+  for (const auto &target : dirs) {
+    if (!directory_exists(target)) {
+      return false;
     }
+  }
+  return true;
+}
 
-    while ((entry = readdir(dir)) != nullptr) {
-        if (entry->d_type == DT_REG && ends_with(entry->d_name, ".mkv")) {
-            list.push_back(entry->d_name);
-        }
-    }
-    if (list.empty()){
-        return false;
-    }
-    closedir(dir);
+bool make_directory(const std::string &path) {
+  if (directory_exists(path)) {
+    INFO("Directory already exists: %s", path.c_str());
     return true;
+  }
+
+  if (mkdir(path.c_str(), 0755) == 0) {
+    INFO("Directory created: %s", path.c_str());
+    return true;
+  } else {
+    ERROR("mkdir failed");
+    return false;
+  }
+}
+
+bool rm(const std::string &path) {
+  struct stat path_stat;
+
+  // stat to see if we have a dir
+  if (stat(path.c_str(), &path_stat) != 0) {
+    ERROR("stat failed");
+    return false;
+  }
+
+  // if a dir, we'll enumerate its contents
+  if (S_ISDIR(path_stat.st_mode)) {
+    DIR *dir = opendir(path.c_str());
+    if (!dir) {
+      ERROR("opendir failed");
+      return false;
+    }
+
+    // get the directory listing; call recursively to deal
+    // with all files and directories
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != nullptr) {
+      // kip entries we don't care about
+      if (std::string(entry->d_name) == "." ||
+          std::string(entry->d_name) == "..") {
+        continue;
+      }
+
+      // build a full path to the new item to check
+      std::string entry_path = path + "/" + entry->d_name;
+
+      if (!rm(entry_path)) {
+        closedir(dir);
+        return false;
+      }
+    }
+
+    closedir(dir);
+
+    // Remove the directory itself
+    if (rmdir(path.c_str()) != 0) {
+      ERROR("rmdir failed");
+      return false;
+    }
+    // only a regular file, so just unlink and return
+  } else {
+    if (unlink(path.c_str()) != 0) {
+      ERROR("unlink failed");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool ends_with(const std::string &filename, const std::string &extension) {
+  if (filename.length() >= extension.length()) {
+    return filename.compare(filename.length() - extension.length(),
+                            extension.length(), extension) == 0;
+  }
+  return false;
+}
+
+bool build_file_list(std::vector<std::string> &list, std::string &target) {
+  DIR *dir;
+  struct dirent *entry;
+
+  dir = opendir(target.c_str());
+  if (dir == nullptr) {
+    ERROR("opendir failed");
+    return false;
+  }
+
+  while ((entry = readdir(dir)) != nullptr) {
+    if (entry->d_type == DT_REG && ends_with(entry->d_name, ".mkv")) {
+      list.push_back(entry->d_name);
+    }
+  }
+  if (list.empty()) {
+    return false;
+  }
+  closedir(dir);
+  return true;
 
 #ifdef DEBUG
-    std::cout << "Detected .mkv files:" << std::endl;
-    for (const auto& file : list) {
-        std::cout << " - " << file << std::endl;
-    }
+  std::cout << "Detected .mkv files:" << std::endl;
+  for (const auto &file : list) {
+    std::cout << " - " << file << std::endl;
+  }
 #endif
-    return 1;
+  return 1;
 }
-

@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,7 +20,7 @@
 
 #include "util.h"
 
-void populate_audio_data(audio_info* audio, size_t index) {
+void populate_audio_data(audio_info *audio, size_t index) {
   char *endptr;
   char *cstring;
 
@@ -28,31 +28,35 @@ void populate_audio_data(audio_info* audio, size_t index) {
   String t_lang = mi_get_string(Stream_Audio, index, "Language");
 
   audio->index = index;
-  audio->channel_count = strtoul(mi_get_string(Stream_Audio, index, "Channel(s)").c_str(), &endptr, 10);
+  audio->channel_count = strtoul(
+      mi_get_string(Stream_Audio, index, "Channel(s)").c_str(), &endptr, 10);
+
   audio->format = !t_format.empty() ? t_format : "-";
   audio->lang = !t_lang.empty() ? t_lang : "-";
-  audio->is_bluray = mi_get_string(Stream_Audio, index, "OriginalSourceMedium") == "Blu-ray" ? 1 : 0;
-  
+  audio->is_bluray =
+      mi_get_string(Stream_Audio, index, "OriginalSourceMedium") == "Blu-ray"
+          ? 1
+          : 0;
+
   handle_duration(mi_get_string(Stream_Audio, index, "Duration"), audio);
   handle_bitrate(mi_get_string(Stream_Audio, index, "BitRate"), audio);
 }
 
 #ifdef DEBUG
-template<>
-void stream_print<audio_info>(audio_info* audio) {
-    std::cout << "\nAudio Information:" << std::endl;
-    std::cout << "  Index: " << audio->index << std::endl;
-    std::cout << "  Format: " << audio->format << std::endl;
-    std::cout << "  Channels: " << audio->channel_count << std::endl;
-    std::cout << "  Duration: " << audio->dr.duration_str << std::endl;
-    std::cout << "  Language: " << audio->lang << std::endl;
-    std::cout << "  Bitrate: " << audio->br.bitrate_str << std::endl;
-    std::cout << "  Blu-ray Source: " << (audio->is_bluray ? "Yes" : "No") 
-    << std::endl << std::endl;
+template <> void stream_print<audio_info>(audio_info *audio) {
+  std::cout << "\nAudio Information:" << std::endl;
+  std::cout << "  Index: " << audio->index << std::endl;
+  std::cout << "  Format: " << audio->format << std::endl;
+  std::cout << "  Channels: " << audio->channel_count << std::endl;
+  std::cout << "  Duration: " << audio->dr.duration_str << std::endl;
+  std::cout << "  Language: " << audio->lang << std::endl;
+  std::cout << "  Bitrate: " << audio->br.bitrate_str << std::endl;
+  std::cout << "  Blu-ray Source: " << (audio->is_bluray ? "Yes" : "No")
+            << std::endl
+            << std::endl;
 }
 #else
-template<>
-  void stream_print<audio_info>(audio_info* video) {
-    // No-op
-  }
+template <> void stream_print<audio_info>(audio_info *video) {
+  // No-op
+}
 #endif

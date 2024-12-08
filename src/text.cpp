@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,11 +20,11 @@
 
 #include "util.h"
 
-void populate_text_data(text_info* text, size_t index) {
+void populate_text_data(text_info *text, size_t index) {
   char *endptr;
   char *cstring;
 
-  String t_index = mi_get_string(Stream_Text, index, "CodecID/Info");
+  String t_index = mi_get_string(Stream_Text, index, "Title");
   String t_format = mi_get_string(Stream_Text, index, "Format");
   String t_lang = mi_get_string(Stream_Text, index, "Language");
 
@@ -32,23 +32,25 @@ void populate_text_data(text_info* text, size_t index) {
   text->info = !t_index.empty() ? t_index : "-";
   text->format = !t_format.empty() ? t_format : "-";
   text->lang = !t_lang.empty() ? t_lang : "-";
-  text->is_bluray = mi_get_string(Stream_Text, index, "OriginalSourceMedium") == "Blu-ray" ? 1 : 0;
+  text->is_bluray =
+      mi_get_string(Stream_Text, index, "OriginalSourceMedium") == "Blu-ray"
+          ? 1
+          : 0;
 }
 
 #ifdef DEBUG
-template<>
-void stream_print<text_info>(text_info* text) {
-    std::cout << "\nText Information:" << std::endl;
-    std::cout << "  Index: " << text->index << std::endl;
-    std::cout << "  Format: " << text->format << std::endl;
-    std::cout << "  Information: " << text->info << std::endl;
-    std::cout << "  Language: " << text->lang << std::endl;
-    std::cout << "  Blu-ray Source: " << (text->is_bluray ? "Yes" : "No") 
-    << std::endl << std::endl;
+template <> void stream_print<text_info>(text_info *text) {
+  std::cout << "\nText Information:" << std::endl;
+  std::cout << "  Index: " << text->index << std::endl;
+  std::cout << "  Format: " << text->format << std::endl;
+  std::cout << "  Information: " << text->info << std::endl;
+  std::cout << "  Language: " << text->lang << std::endl;
+  std::cout << "  Blu-ray Source: " << (text->is_bluray ? "Yes" : "No")
+            << std::endl
+            << std::endl;
 }
 #else
-template<>
-  void stream_print<text_info>(text_info* video) {
-    // No-op
-  }
+template <> void stream_print<text_info>(text_info *video) {
+  // No-op
+}
 #endif
