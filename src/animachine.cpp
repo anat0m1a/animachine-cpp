@@ -53,7 +53,6 @@ int main(int argc, char **argv) {
   }
 
   if (!batch_m) {
-    INFO("Working in single file mode");
     input = argv[1];
     output = argv[2];
 

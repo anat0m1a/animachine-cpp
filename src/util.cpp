@@ -482,7 +482,7 @@ bool build_options(ffmpeg_opts &ff_opts) {
 
   inf.clear();
 
-  return false;
+  return true;
 }
 
 std::string format_episode(int curr, int ep_max) {
