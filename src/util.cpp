@@ -661,6 +661,9 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
   c_args.push_back(const_cast<char *>("-y"));
   c_args.push_back(const_cast<char *>("-i"));
   c_args.push_back(const_cast<char *>(target.c_str()));
+
+  args.pop_back(); args.push_back(output);
+  
   for (auto &arg : args) {
     c_args.push_back(const_cast<char *>(arg.c_str()));
   }
