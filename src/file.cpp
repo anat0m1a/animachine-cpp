@@ -26,6 +26,20 @@
 #include <unistd.h>
 #include <vector>
 
+// some basic string escaping for the subtitle options
+std::string escape(const std::string &input) {
+  DEBUG_INFO("Escaping string -> %s", input.c_str());
+  std::ostringstream escaped;
+  for (char c : input) {
+      if (c == ' ' || c == '\'' || c == '"' || c == '[' || c == ']' || c == '(' || c == ')' || c == '\\') {
+          escaped << '\\';
+      }
+      escaped << c;
+  }
+  DEBUG_INFO("Escaped string -> %s", escaped.str().c_str());
+  return escaped.str();
+}
+
 bool is_executable(const std::string &path) {
   struct stat st;
   return (stat(path.c_str(), &st) == 0) && (st.st_mode & S_IXUSR);

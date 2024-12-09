@@ -390,6 +390,7 @@ bool directory_exists(const std::string &path);
 bool directories_exist(const std::vector<std::string> &dirs);
 bool file_exists(const std::string &path);
 bool make_directory(const std::string &path);
+std::string escape(const std::string &input);
 bool rm(const std::string &path);
 
 // this prints information on a particular stream. see text/audio/video.cpp

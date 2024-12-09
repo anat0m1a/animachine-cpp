@@ -597,7 +597,7 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
       case TextCodec::ASS:
         args.insert(args.end(), {"-vf",
                                  std::string("subtitles=")
-                                     .append(target)
+                                     .append(escape(target))
                                      .append(":stream_index=")
                                      .append(std::to_string(opts.text.index)),
                                  "-map", "0:v:0"});
