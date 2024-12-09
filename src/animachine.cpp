@@ -93,10 +93,10 @@ int main(int argc, char **argv) {
               << "This program currently assumes every target in this "
                  "directory ends with mkv "
               << std::endl
-              << "and the targets are named in a natural or sequential manner, "
-                 "if this is not the case, "
+              << "and the targets are named such that lexicographical sorting "
+                 "will order them correctly, "
               << std::endl
-              << "exit the script now." << std::endl
+              << "if this is not the case exit the script now." << std::endl
               << std::endl;
 
     answer = Question{"batch_check", "Is this acceptable?", Type::yesNo}.ask();
