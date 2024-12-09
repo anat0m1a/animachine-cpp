@@ -21,6 +21,7 @@
 #include "util.h"
 #include <cstring>
 #include <dirent.h>
+#include <algorithm>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
@@ -186,10 +187,15 @@ bool build_file_list(std::vector<std::string> &list, std::string &target) {
       list.push_back(entry->d_name);
     }
   }
+
+  closedir(dir);
+
   if (list.empty()) {
     return false;
   }
-  closedir(dir);
+
+  std::sort(list.begin(), list.end());
+  
   return true;
 
 #ifdef DEBUG
