@@ -31,6 +31,8 @@
 
 using namespace MediaInfoDLL;
 
+extern bool FF_IGNORE_PAWE;
+
 extern MediaInfo gMi;
 extern const std::string g_art;
 extern const std::vector<std::string> gpresets;

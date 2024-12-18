@@ -38,12 +38,12 @@ int main(int argc, char **argv) {
   std::string input = "";
   std::string output = "";
 
-  bool batch_m = false;
-
-  if (argc != 3) {
-    ERROR("input/output directories or input/output files required.");
-    return 1;
+  for(int i = 1; i < argc; i++){
+    if (strncmp(argv[i], "--ignore-pawe", strlen("--ignore-pawe")))
+      FF_IGNORE_PAWE = 1;
   }
+
+  bool batch_m = false;
 
   if (directory_exists(argv[1]) && !file_exists(argv[2])) {
     INFO("Working in batch mode");

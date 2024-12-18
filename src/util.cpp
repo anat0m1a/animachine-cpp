@@ -31,6 +31,14 @@
 
 MediaInfo gMi;
 
+// so this is very sketchy. often times I'll encounter
+// a blu-ray with wack dts and pts (decompression / presentation time stamp)
+// this seems to happen right at the end and ffmpeg still spits out a valid
+// video file, so we can just ignore it if the user specifies we should.
+// it is then at their descretion to determine if the output is suitable.
+
+bool FF_IGNORE_PAWE = 0;
+
 using namespace alx;
 
 const std::string g_art = R"(
@@ -62,8 +70,8 @@ const std::vector<std::string> gpresets = {
     "limit-sao:bframes=8:psy-rd=1.5:psy-rdoq=2:aq-mode=3",
     "bframes=8:psy-rd=1:psy-rdoq=1:aq-mode=3:qcomp=0.8",
     "no-sao:bframes=8:psy-rd=1.5:psy-rdoq=3:aq-mode=3:ref=6",
-    "no-sao:no-strong-intra-smoothing:bframes=8:psy-rd=2:psy-rdoq=2:aq-mode=3:"
-    "deblock=-1,-1:ref=6"};
+    "no-sao:no-strong-intra-smoothing:bframes=8:psy-rd=2:psy-rdoq=2:aq-mode=3:\
+deblock=-1,-1:ref=6"};
 
 const std::vector<std::string> g_enc_presets = {
     "ultrafast", "superfast", "veryfast", "faster",   "fast",
@@ -546,6 +554,10 @@ bool process_fork_ffmpeg(std::vector<char *> &c_args) {
     waitpid(pid, &status, 0); // await completion
 
     if (WIFEXITED(status)) {
+      // TODO: confirm that 176 is specifically for "patch welcome"
+      if (WEXITSTATUS(status) == 176 && FF_IGNORE_PAWE) {
+        return true;
+      }
       if (WEXITSTATUS(status) != 0) {
         ERROR("ffmpeg returned with non-zero exit status %d",
               WEXITSTATUS(status));

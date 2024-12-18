@@ -1,4 +1,6 @@
-build/*
+build*
+*.json
 tests/*
 .cache
+.vscode
 compile_commands.json
