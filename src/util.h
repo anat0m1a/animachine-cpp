@@ -99,7 +99,7 @@ struct video_info {
   ~video_info() = default;
 };
 
-enum class TextCodec { PGS, ASS };
+enum class TextCodec { PGS, ASS, VobSub };
 
 struct streams {
   struct video {

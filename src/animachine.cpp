@@ -45,6 +45,11 @@ int main(int argc, char **argv) {
 
   bool batch_m = false;
 
+  if (argc < 3) {
+    ERROR("We need at least two arguments.");
+    return 1;
+  }
+
   if (directory_exists(argv[1]) && !file_exists(argv[2])) {
     INFO("Working in batch mode");
     batch_m = true;

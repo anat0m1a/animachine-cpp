@@ -418,6 +418,8 @@ bool build_options(ffmpeg_opts &ff_opts) {
         ff_opts.text.codec = TextCodec::PGS;
       } else if (this_text->format == "ASS") {
         ff_opts.text.codec = TextCodec::ASS;
+      } else if (this_text->format == "VobSub") {
+        ff_opts.text.codec = TextCodec::VobSub;
       } else {
         ERROR("Currently unsupported codec \"%s\"", this_text->format.c_str());
         return false;
@@ -615,6 +617,7 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
                                  "-map", "0:v:0"});
         break;
       case TextCodec::PGS:
+      case TextCodec::VobSub:
         args.insert(args.end(), {"-filter_complex",
                                  std::string("[0:v][0:s:")
                                      .append(std::to_string(opts.text.index))
