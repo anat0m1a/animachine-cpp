@@ -31,10 +31,19 @@ std::string escape(const std::string &input) {
   DEBUG_INFO("Escaping string -> %s", input.c_str());
   std::ostringstream escaped;
   for (char c : input) {
-      if (c == ' ' || c == '\'' || c == '"' || c == '[' || c == ']' || c == '(' || c == ')' || c == '\\') {
-          escaped << '\\';
-      }
+    if (c == '\'') {
+      // output 3 backslashes (i.e. 6 in the literal, because each '\\' is one backslash).
+      // then output the actual apostrophe (I HATE THIS SOFTWARE)
+      escaped << "\\\\\\";  // 6 backslashes -> 3 in final string
       escaped << c;
+    } else if (c == ' ' || c == '"' ||
+               c == '[' || c == ']' ||
+               c == '(' || c == ')' ||
+               c == '\\') {
+      escaped << '\\' << c;
+    } else {
+      escaped << c;
+    }
   }
   DEBUG_INFO("Escaped string -> %s", escaped.str().c_str());
   return escaped.str();
