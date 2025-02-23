@@ -34,6 +34,7 @@ target_link_libraries(animachine PRIVATE Inquirer)
 target_include_directories(animachine PRIVATE ${CMAKE_SOURCE_DIR}/cpp-inquirer/src)
 
 target_include_directories(animachine PRIVATE ${LIBMEDIAINFO_INCLUDE_DIRS})
+target_link_directories(animachine PRIVATE ${LIBMEDIAINFO_LIBRARY_DIRS})
 target_link_libraries(animachine PRIVATE ${LIBMEDIAINFO_LIBRARIES})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Sanitize")

@@ -32,6 +32,8 @@
 using namespace MediaInfoDLL;
 
 extern bool FF_IGNORE_PAWE;
+extern char MAX_RETRIES;
+extern char ENTRY_OFFSET;
 
 extern MediaInfo gMi;
 extern const std::string g_art;
@@ -385,6 +387,7 @@ bool fileExists(const char *path);
 std::string format_episode(int curr, int ep_max);
 bool prep_and_call_ffmpeg(std::string &target, std::string &output,
                           ffmpeg_opts &opts);
+char get_from_argv(int index, char** argv);
 
 // file stuff
 bool build_file_list(std::vector<std::string> &list, std::string &target);

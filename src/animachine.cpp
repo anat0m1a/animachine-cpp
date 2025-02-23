@@ -21,6 +21,7 @@
 #include <MediaInfo/MediaInfo.h>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <stdlib.h>
 #include <string>
 #include <sys/stat.h>
@@ -39,9 +40,28 @@ int main(int argc, char **argv) {
   std::string output = "";
 
   for(int i = 1; i < argc; i++){
-    if (strncmp(argv[i], "--ignore-pawe", strlen("--ignore-pawe")))
+    if (!strncmp(argv[i], "--ignore-pawe", strlen("--ignore-pawe")))
       FF_IGNORE_PAWE = 1;
+    if (!strncmp(argv[i], "--max-retries", strlen("--max-retries"))){
+      if ((MAX_RETRIES = get_from_argv(i, argv)) == 0)
+        ERROR("failed to set arg 'max-retries'");
+    }
+    // if (!strncmp(argv[i], "--pre-check", strlen("--pre-check"))) 
+    //   FF_IGNORE_PAWE = 1;
+    if (!strncmp(argv[i], "--entry-offset", strlen("--entry-offset"))){
+      if((ENTRY_OFFSET = get_from_argv(i, argv)) == 0)
+        ERROR("failed to set arg 'entry-offset");
+    }
   }
+  #ifdef DEBUG
+  if(MAX_RETRIES)
+    DEBUG_INFO("Using max retries of: %hu", MAX_RETRIES);
+  if (ENTRY_OFFSET)
+    DEBUG_INFO("Using entry offset of %hu", ENTRY_OFFSET);
+  if (FF_IGNORE_PAWE)
+    DEBUG_INFO("Using FF_IGNORE_PAWE");
+  #endif // debug
+
 
   bool batch_m = false;
 
@@ -79,7 +99,7 @@ int main(int argc, char **argv) {
 
     gMi.Open(input);
     if (mi_get_string(Stream_Video, 0, "ID").empty()) {
-      ERROR("Invalid arguments, there is nothing to do.");
+      ERROR("File appears to have no video stream");
       return 1;
     }
   }
@@ -90,7 +110,6 @@ int main(int argc, char **argv) {
   size_t season_c;
   std::vector<std::string> file_list;
   String answer;
-  char *endptr;
   ffmpeg_opts *ff_opts = new ffmpeg_opts();
 
   if (batch_m) {

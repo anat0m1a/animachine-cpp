@@ -197,7 +197,7 @@ bool build_file_list(std::vector<std::string> &list, std::string &target) {
   }
 
   while ((entry = readdir(dir)) != nullptr) {
-    if (entry->d_type == DT_REG && ends_with(entry->d_name, ".mkv")) {
+    if (entry->d_type == DT_REG && (ends_with(entry->d_name, ".mkv") || ends_with(entry->d_name, ".VOB"))) {
       list.push_back(entry->d_name);
     }
   }
@@ -209,6 +209,12 @@ bool build_file_list(std::vector<std::string> &list, std::string &target) {
   }
 
   std::sort(list.begin(), list.end());
+
+  // optionally offset into the directory listing
+  while(ENTRY_OFFSET) {
+    list.erase(list.begin());
+    ENTRY_OFFSET-=1;
+  }
   
   return true;
 

@@ -38,6 +38,8 @@ MediaInfo gMi;
 // it is then at their descretion to determine if the output is suitable.
 
 bool FF_IGNORE_PAWE = 0;
+char MAX_RETRIES = 0;
+char ENTRY_OFFSET = 0;
 
 using namespace alx;
 
@@ -78,8 +80,6 @@ const std::vector<std::string> g_enc_presets = {
     "medium",    "slow",      "slower",   "veryslow", "placebo"};
 
 std::string g_program = "";
-
-std::vector<std::string> g_saved_options = {};
 
 String mi_get_string(stream_t kind, size_t index, const String &param) {
   return gMi.Get(kind, index, param, Info_Text);
@@ -252,6 +252,23 @@ bool get_streams(struct streams &streams) {
   }
 
   return true;
+}
+
+char get_from_argv(int option_index, char** argv){
+  char *endptr;
+  int result = 0;
+  int num = strtoul(argv[option_index + 1], &endptr, 10);
+  if (endptr == argv[option_index + 1]) {
+    ERROR("%s: not decimal", argv[option_index + 1]);
+  } else if (*endptr != '\0') {
+    ERROR("extra characters at end of input");
+  } else if (num > UINT16_MAX || num == 0){
+    ERROR("not a valid number of retries"); return 1;
+  } else {
+    result = num;
+  }
+  
+  return result;
 }
 
 bool get_answer_index(String &a, std::vector<String> &arr, size_t &index) {
@@ -592,82 +609,63 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
     }
   }
 
-  if (g_saved_options.empty()) {
-    if (opts.should_test) {
-      args.insert(args.end(), {"-t", "60", "-ss", "00:05:00"});
-    }
-
-    args.insert(args.end(), {"-c:v", "libx265"}); // we're only supporting HEVC
-
-    if (!opts.video.h265_opts.empty()) {
-      args.insert(args.end(), {"-x265-params", opts.video.h265_opts});
-    }
-
-    args.insert(args.end(), {"-crf", std::to_string(opts.video.crf), "-preset",
-                             opts.video.preset});
-
-    if (opts.text.should_encode_subs) {
-      switch (opts.text.codec) {
-      case TextCodec::ASS:
-        args.insert(args.end(), {"-vf",
-                                 std::string("subtitles=")
-                                     .append(escape(target))
-                                     .append(":stream_index=")
-                                     .append(std::to_string(opts.text.index)),
-                                 "-map", "0:v:0"});
-        break;
-      case TextCodec::PGS:
-      case TextCodec::VobSub:
-        args.insert(args.end(), {"-filter_complex",
-                                 std::string("[0:v][0:s:")
-                                     .append(std::to_string(opts.text.index))
-                                     .append("]overlay[v]"),
-                                 "-map", "[v]"});
-        break;
-      default:
-        ERROR("Unexpected subtitle type, bailing out.");
-        return false;
-      }
-    }
-
-    if (opts.audio.should_copy) {
-      args.insert(args.end(), {"-c:a", "copy"});
-    } else {
-      args.insert(args.end(), {"-c:a", opts.audio.codec, "-b:a", "192k"});
-    }
-
-    if (opts.audio.should_downsample) {
-      args.insert(args.end(), {"-ac", "2"});
-    }
-
-    args.insert(args.end(), {"-map", std::string("0:a:").append(
-                                         std::to_string(opts.audio.index))});
-
-    if (!opts.text.should_encode_subs) {
-      args.insert(args.end(), {"-map", "0:v:0"});
-    }
-
-    args.insert(args.end(), {output});
-
-    /*
-      only save these options when we're not testing,
-      otherwise we'll just do a batch of tests.
-    */
-    if (!opts.should_test) {
-      g_saved_options = args;
+  if (opts.text.should_encode_subs) {
+    switch (opts.text.codec) {
+    case TextCodec::ASS:
+      args.insert(args.end(), {"-vf",
+                                std::string("subtitles=")
+                                    .append(escape(target))
+                                    .append(":stream_index=")
+                                    .append(std::to_string(opts.text.index)),
+                                "-map", "0:v:0"});
+      break;
+    case TextCodec::PGS:
+    case TextCodec::VobSub:
+      args.insert(args.end(), {"-filter_complex",
+                                std::string("[0:v][0:s:")
+                                    .append(std::to_string(opts.text.index))
+                                    .append("]overlay[v]"),
+                                "-map", "[v]"});
+      break;
+    default:
+      ERROR("Unexpected subtitle type, bailing out.");
+      return false;
     }
   }
 
-  /*
-    we'll also need to check when we want to restore
-    out saved options.
-
-    this should make it such that args is used when testing,
-    and at any other point, we'll just restore our options cache.
-  */
-  if (!opts.should_test) {
-    args = g_saved_options;
+  if (opts.should_test) {
+    args.insert(args.end(), {"-t", "60", "-ss", "00:05:00"});
   }
+
+  args.insert(args.end(), {"-c:v", "libx265"}); // we're only supporting HEVC
+
+  if (!opts.video.h265_opts.empty()) {
+    args.insert(args.end(), {"-x265-params", opts.video.h265_opts});
+  }
+
+  args.insert(args.end(), {"-crf", std::to_string(opts.video.crf), "-preset",
+                            opts.video.preset});
+
+  
+
+  if (opts.audio.should_copy) {
+    args.insert(args.end(), {"-c:a", "copy"});
+  } else {
+    args.insert(args.end(), {"-c:a", opts.audio.codec, "-b:a", "192k"});
+  }
+
+  if (opts.audio.should_downsample) {
+    args.insert(args.end(), {"-ac", "2"});
+  }
+
+  args.insert(args.end(), {"-map", std::string("0:a:").append(
+                                        std::to_string(opts.audio.index))});
+
+  if (!opts.text.should_encode_subs) {
+    args.insert(args.end(), {"-map", "0:v:0"});
+  }
+
+  args.insert(args.end(), {output});
 
   // we need a c-style string for execv
   std::vector<char *> c_args;
@@ -685,11 +683,18 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
   c_args.insert(c_args.begin(), const_cast<char *>(g_program.c_str()));
 
   INFO("Now calling ffmpeg...");
-
-  if (!process_fork_ffmpeg(c_args)) {
-    ERROR("ffmpeg exited abnormally");
-    return false;
+#ifdef DEBUG
+  for (int i = 0; i < c_args.size() - 1; i++) {
+    printf("%s ", c_args[i]);
   }
+#endif // DEBUG
+  do {
+    if (process_fork_ffmpeg(c_args))
+      return true;
+    ERROR("ffmpeg exited abnormally");
+    MAX_RETRIES -= 1;
+  } while(MAX_RETRIES);
 
-  return true;
+  ERROR("max retries reached");  
+  return false;
 }
