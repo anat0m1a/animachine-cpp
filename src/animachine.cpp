@@ -139,7 +139,6 @@ int main(int argc, char **argv) {
       ERROR("Failed to build the file list");
       return 1;
     }
-    INFO("I get to here");
 
     cast_to_size(
         Question{"season_c",
