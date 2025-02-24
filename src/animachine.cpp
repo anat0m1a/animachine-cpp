@@ -48,9 +48,15 @@ int main(int argc, char **argv) {
     }
     // if (!strncmp(argv[i], "--pre-check", strlen("--pre-check"))) 
     //   FF_IGNORE_PAWE = 1;
-    if (!strncmp(argv[i], "--entry-offset", strlen("--entry-offset"))){
-      if((ENTRY_OFFSET = get_from_argv(i, argv)) == 0)
+    if (!strncmp(argv[i], "--entry-offset", strlen("--entry-offset"))) {
+      if (i == argc - 1) {
+        ERROR("argument not supplied");
+        return 1;
+      }
+      if((ENTRY_OFFSET = get_from_argv(i, argv)) == 0) {
         ERROR("failed to set arg 'entry-offset");
+        return 1;
+      }
     }
   }
   #ifdef DEBUG
@@ -133,6 +139,7 @@ int main(int argc, char **argv) {
       ERROR("Failed to build the file list");
       return 1;
     }
+    INFO("I get to here");
 
     cast_to_size(
         Question{"season_c",

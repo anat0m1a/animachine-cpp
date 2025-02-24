@@ -220,6 +220,8 @@ bool build_file_list(std::vector<std::string> &list, std::string &target) {
   std::sort(list.begin(), list.end());
 
   // optionally offset into the directory listing
+  if(ENTRY_OFFSET > list.size())
+    { ERROR("entry_offset too large"); return false; }
   while(ENTRY_OFFSET) {
     list.erase(list.begin());
     ENTRY_OFFSET-=1;
