@@ -38,6 +38,7 @@ MediaInfo gMi;
 // it is then at their descretion to determine if the output is suitable.
 
 bool FF_IGNORE_PAWE = 0;
+bool FF_CROP = 0;
 char MAX_RETRIES = 0;
 char ENTRY_OFFSET = 0;
 
@@ -609,23 +610,44 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
     }
   }
 
+  if (FF_CROP && !opts.text.should_encode_subs) {
+    args.insert(args.end(), {"-filter_complex", 
+                             "[0:v]cropdetect=limit=24:round=2:reset=10,crop=w=ih*4/3:h=ih:x=(iw-ih*4/3)/2:y=0[v]",
+                             "-map", "[v]"});
+  }
+
   if (opts.text.should_encode_subs) {
+    std::string filter;
+    args.insert(args.end(), {"-filter_complex"});
     switch (opts.text.codec) {
     case TextCodec::ASS:
-      args.insert(args.end(), {"-vf",
-                                std::string("subtitles=")
+      filter = std::string("[0:v]subtitles=")
                                     .append(escape(target))
-                                    .append(":stream_index=")
-                                    .append(std::to_string(opts.text.index)),
-                                "-map", "0:v:0"});
+                                    .append(":si=")
+                                    .append(std::to_string(opts.text.index));
+                                    
+      if(FF_CROP) {
+        filter.append("[subs]");
+        filter.append(";[subs]cropdetect=limit=24:round=2:reset=10,crop=w=ih*4/3:h=ih:x=(iw-ih*4/3)/2:y=0,format=yuv420p[out]");
+        args.insert(args.end(), {filter, "-map", "[out]"});
+      } else {
+        filter.append("[v]");
+        args.insert(args.end(), {filter, "-map", "[v]"});
+      }
       break;
     case TextCodec::PGS:
     case TextCodec::VobSub:
-      args.insert(args.end(), {"-filter_complex",
-                                std::string("[0:v][0:s:")
-                                    .append(std::to_string(opts.text.index))
-                                    .append("]overlay[v]"),
-                                "-map", "[v]"});
+      filter = std::string("[0:v][0:s:")
+                                    .append(std::to_string(opts.text.index));
+      // dynamic crop detection inline! resolution agnostic!
+      if (FF_CROP) {
+        filter.append("]overlay[subs]");
+        filter.append(";[subs]cropdetect=limit=24:round=2:reset=10,crop=w=ih*4/3:h=ih:x=(iw-ih*4/3)/2:y=0,format=yuv420p[out]");
+        args.insert(args.end(), {filter, "-map", "[out]"});
+      } else {
+        filter.append("]overlay[v]");
+        args.insert(args.end(), {filter, "-map", "[v]"});
+      }
       break;
     default:
       ERROR("Unexpected subtitle type, bailing out.");

@@ -27,11 +27,13 @@ bool populate_text_data(text_info &text, size_t index) {
   String t_index = mi_get_string(Stream_Text, index, "Title");
   String t_format = mi_get_string(Stream_Text, index, "Format");
   String t_lang = mi_get_string(Stream_Text, index, "Language");
+  bool t_default = mi_get_string(Stream_Text, index, "Default") == "Yes" ? true : false;
 
   text.index = index;
   text.info = !t_index.empty() ? t_index : "-";
   text.format = !t_format.empty() ? t_format : "-";
   text.lang = !t_lang.empty() ? t_lang : "-";
+  text.is_default = t_default;
   text.is_bluray =
       mi_get_string(Stream_Text, index, "OriginalSourceMedium") == "Blu-ray"
           ? 1
@@ -47,6 +49,7 @@ void stream_print(text_info &text) {
   std::cout << "  Format: " << text.format << std::endl;
   std::cout << "  Information: " << text.info << std::endl;
   std::cout << "  Language: " << text.lang << std::endl;
+  std::cout << "  Default: " << text.is_default << std::endl;
   std::cout << "  Blu-ray Source: " << (text.is_bluray ? "Yes" : "No")
             << std::endl
             << std::endl;

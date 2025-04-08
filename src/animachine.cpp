@@ -42,6 +42,8 @@ int main(int argc, char **argv) {
   for(int i = 1; i < argc; i++){
     if (!strncmp(argv[i], "--ignore-pawe", strlen("--ignore-pawe")))
       FF_IGNORE_PAWE = 1;
+    if (!strncmp(argv[i], "--crop", strlen("--crop")))
+      FF_CROP = 1;
     if (!strncmp(argv[i], "--max-retries", strlen("--max-retries"))){
       if ((MAX_RETRIES = get_from_argv(i, argv)) == 0)
         ERROR("failed to set arg 'max-retries'");

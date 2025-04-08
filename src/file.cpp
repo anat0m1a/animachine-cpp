@@ -39,7 +39,7 @@ std::string escape(const std::string &input) {
     } else if (c == ' ' || c == '"' ||
                c == '[' || c == ']' ||
                c == '(' || c == ')' ||
-               c == '\\') {
+               c == '\\' || c == ',') {
       escaped << '\\' << c;
     } else {
       escaped << c;
