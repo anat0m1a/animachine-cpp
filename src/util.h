@@ -32,6 +32,7 @@
 using namespace MediaInfoDLL;
 
 extern bool FF_IGNORE_PAWE;
+extern bool FF_CROP;
 extern char MAX_RETRIES;
 extern char ENTRY_OFFSET;
 
@@ -49,6 +50,7 @@ struct text_info {
   String format;
   String info;
   String lang;
+  String is_default;
   bool is_bluray = false;
 
   text_info() = default;
@@ -92,6 +94,7 @@ struct video_info {
   } ds;
   String info;
   bool is_bluray = false;
+  bool is_default = false;
   struct duration {
     String duration_str;
     size_t duration = 0;

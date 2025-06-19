@@ -25,6 +25,7 @@
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <spawn.h>
 
 #include "inquirer.h"
 #include "util.h"
@@ -38,6 +39,7 @@ MediaInfo gMi;
 // it is then at their descretion to determine if the output is suitable.
 
 bool FF_IGNORE_PAWE = 0;
+bool FF_CROP = 0;
 char MAX_RETRIES = 0;
 char ENTRY_OFFSET = 0;
 
@@ -522,78 +524,73 @@ std::string format_episode(int curr, int ep_max) {
   return formatted.str();
 }
 
-bool process_fork_ffmpeg(std::vector<char *> &c_args) {
-
-  if (setenv("AV_LOG_FORCE_COLOR", "1", 1) != 0) { // force colour
-    ERROR("setenv failed");
-    return false;
-  }
-
-  int pipefd[2];
-  if (pipe(pipefd) == -1) {
-    ERROR("pipe creation failed");
-    return false;
-  }
-
-  pid_t pid = fork();
-
-  if (pid == -1) {
-    ERROR("fork failed");
-    return false;
-  }
-
-  if (pid == 0) {
-    // child
-    close(pipefd[0]); // close the read end
-
-    // redirect stdout and stderr to the write end of the pipe
-    dup2(pipefd[1], STDOUT_FILENO);
-    dup2(pipefd[1], STDERR_FILENO);
-    close(pipefd[1]); // close the original write end
-
-    if (execv(g_program.c_str(), c_args.data()) == -1) {
-      ERROR("execv failed");
-      return false;
+bool process_spawn_ffmpeg(std::vector<char*>& c_args)
+{
+    // Force colour in the child’s log output
+    if (setenv("AV_LOG_FORCE_COLOR", "1", 1) != 0) {
+        ERROR("setenv failed");
+        return false;
     }
-  } else {
-    // parent
-    close(pipefd[1]); // close the write end
 
-    char buffer[256];
-    ssize_t bytes_read;
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        ERROR("pipe creation failed");
+        return false;
+    }
+
+    posix_spawn_file_actions_t actions;
+    posix_spawn_file_actions_init(&actions);
+
+    // Child:   dup pipefd[1] → stdout/stderr, then close both pipe ends
+    posix_spawn_file_actions_adddup2 (&actions, pipefd[1], STDOUT_FILENO);
+    posix_spawn_file_actions_adddup2 (&actions, pipefd[1], STDERR_FILENO);
+    posix_spawn_file_actions_addclose(&actions, pipefd[0]);
+    posix_spawn_file_actions_addclose(&actions, pipefd[1]);
+
+    pid_t pid;
+    int rc = posix_spawn(&pid,
+                         g_program.c_str(),
+                         &actions,
+                         nullptr,
+                         c_args.data(),   
+                         environ);        
+    posix_spawn_file_actions_destroy(&actions);
+    close(pipefd[1]);
+
+    if (rc != 0) {
+        ERROR("posix_spawn failed: %s", strerror(rc));
+        close(pipefd[0]);
+        return false;
+    }
 
     INFO("ffmpeg logs:");
-    while ((bytes_read = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
-      buffer[bytes_read] = '\0';
-      std::cout << buffer;
+    char buf[256];
+    ssize_t n;
+    while ((n = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
+        buf[n] = '\0';
+        std::cout << buf;
     }
-    close(pipefd[0]); // close the read end
+    close(pipefd[0]);
 
     int status;
-    waitpid(pid, &status, 0); // await completion
+    waitpid(pid, &status, 0);
 
     if (WIFEXITED(status)) {
-      // TODO: confirm that 176 is specifically for "patch welcome"
-      if (WEXITSTATUS(status) == 176 && FF_IGNORE_PAWE) {
+        int code = WEXITSTATUS(status);
+        if (code == 176 && FF_IGNORE_PAWE) return true;
+        if (code != 0) {
+            ERROR("ffmpeg returned %d", code);
+            return false;
+        }
+        INFO("ffmpeg exited with code: %d", code);
         return true;
-      }
-      if (WEXITSTATUS(status) != 0) {
-        ERROR("ffmpeg returned with non-zero exit status %d",
-              WEXITSTATUS(status));
-        return false;
-      }
-      INFO("ffmpeg exited with code: %d", WEXITSTATUS(status));
-      return true;
-    } else if (WIFSIGNALED(status)) {
-      ERROR("ffmpeg terminated by signal: %d", WTERMSIG(status));
-      return false;
-    } else {
-      WARNING("ffmpeg terminated abnormally");
-      return false;
     }
-  }
-
-  return false; // should never reach here
+    if (WIFSIGNALED(status)) {
+        ERROR("ffmpeg killed by signal %d", WTERMSIG(status));
+        return false;
+    }
+    WARNING("ffmpeg terminated abnormally");
+    return false;
 }
 
 bool prep_and_call_ffmpeg(std::string &target, std::string &output,
@@ -609,23 +606,44 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
     }
   }
 
+  if (FF_CROP && !opts.text.should_encode_subs) {
+    args.insert(args.end(), {"-filter_complex", 
+                             "[0:v]cropdetect=limit=24:round=2:reset=10,crop=w=ih*4/3:h=ih:x=(iw-ih*4/3)/2:y=0[v]",
+                             "-map", "[v]"});
+  }
+
   if (opts.text.should_encode_subs) {
+    std::string filter;
+    args.insert(args.end(), {"-filter_complex"});
     switch (opts.text.codec) {
     case TextCodec::ASS:
-      args.insert(args.end(), {"-vf",
-                                std::string("subtitles=")
+      filter = std::string("[0:v]subtitles=")
                                     .append(escape(target))
-                                    .append(":stream_index=")
-                                    .append(std::to_string(opts.text.index)),
-                                "-map", "0:v:0"});
+                                    .append(":si=")
+                                    .append(std::to_string(opts.text.index));
+                                    
+      if(FF_CROP) {
+        filter.append("[subs]");
+        filter.append(";[subs]cropdetect=limit=24:round=2:reset=10,crop=w=ih*4/3:h=ih:x=(iw-ih*4/3)/2:y=0,format=yuv420p[out]");
+        args.insert(args.end(), {filter, "-map", "[out]"});
+      } else {
+        filter.append("[v]");
+        args.insert(args.end(), {filter, "-map", "[v]"});
+      }
       break;
     case TextCodec::PGS:
     case TextCodec::VobSub:
-      args.insert(args.end(), {"-filter_complex",
-                                std::string("[0:v][0:s:")
-                                    .append(std::to_string(opts.text.index))
-                                    .append("]overlay[v]"),
-                                "-map", "[v]"});
+      filter = std::string("[0:v][0:s:")
+                                    .append(std::to_string(opts.text.index));
+      // dynamic crop detection inline! resolution agnostic!
+      if (FF_CROP) {
+        filter.append("]overlay[subs]");
+        filter.append(";[subs]cropdetect=limit=24:round=2:reset=10,crop=w=ih*4/3:h=ih:x=(iw-ih*4/3)/2:y=0,format=yuv420p[out]");
+        args.insert(args.end(), {filter, "-map", "[out]"});
+      } else {
+        filter.append("]overlay[v]");
+        args.insert(args.end(), {filter, "-map", "[v]"});
+      }
       break;
     default:
       ERROR("Unexpected subtitle type, bailing out.");
@@ -689,7 +707,7 @@ bool prep_and_call_ffmpeg(std::string &target, std::string &output,
   }
 #endif // DEBUG
   do {
-    if (process_fork_ffmpeg(c_args))
+    if (process_spawn_ffmpeg(c_args))
       return true;
     ERROR("ffmpeg exited abnormally");
     MAX_RETRIES -= 1;
