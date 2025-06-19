@@ -30,6 +30,8 @@
 #include "inquirer.h"
 #include "util.h"
 
+extern char **environ;
+
 MediaInfo gMi;
 
 // so this is very sketchy. often times I'll encounter
